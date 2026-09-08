@@ -1,8 +1,7 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-// base는 GitHub Pages 저장소 이름으로 바꿔주세요 (예: '/book-character-map/')
 export default defineConfig({
   plugins: [react()],
-  base: "./",
-});
+  base: './', // <-- 이 줄을 추가해 주세요!
+})
