@@ -1123,7 +1123,11 @@ async function finishCopy(){
   r.className='result ok';r.textContent='✍️ 완료! 다시 한번 정답을 입력해보세요 (힌트 없음)';
   setTimeout(()=>{
     if(C===c)closeCopy();
-    if(Q===run){ Q.cur.noHint = true; showStep(); }
+    if(Q===run){ 
+      Q.cur.noHint = true; 
+      showStep(); 
+      $('qModal').classList.remove('hidden'); // 다시 문제 창을 화면에 표시
+    }
   }, 1600);
 }
 
