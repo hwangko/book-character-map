@@ -206,7 +206,7 @@ small.mute{color:var(--mute);font-weight:400}
       <label>5연속 정답 아이템 <select id="cItems"><option value="on" selected>켜기</option><option value="off">끄기</option></select></label>
       <label>땅 보호 시간(시간) <input type="number" id="cProt" min="1" max="72" value="21" style="width:70px"></label>
     </div>
-    <small class="mute">아이템은 5연속 정답마다 🛡️땅 보호 또는 🎁2칸 무료 중 하나가 자동으로 바로 사용돼요. 따라 쓰기는 복사·붙여넣기가 막혀 있어요.</small>
+    <small class="mute">아이템은 5연속 정답마다 🛡️방금 차지한 땅 보호 또는 🎁2칸 무료 중 하나가 자동으로 바로 사용돼요. 따라 쓰기는 복사·붙여넣기가 막혀 있어요.</small>
   </div>
   <div class="card"><h3>3. 단어 목록 <small class="mute">(한 줄에 하나: 영어,뜻 / 뜻이 여러 개면 "/" 로 구분 / 8개 이상)</small></h3>
     <textarea id="cWords" spellcheck="false"></textarea>
@@ -418,8 +418,19 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden');window.scrollTo(0,0)}
 function toast(msg,ms=2400){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),ms)}
 
-const cfgRaw=window.FIREBASE_CONFIG;
-if(!cfgRaw||!cfgRaw.databaseURL||/여기에|YOUR_/i.test(JSON.stringify(cfgRaw))){
+// firebase-config.js 가 없거나 안내용(빈) 파일이면 아래 내장 설정값을 써요
+const BUILTIN_CONFIG={
+  apiKey:"AIzaSyCLAsuxeBllf_FE30qZQMXMP1bT6dlZMFY",
+  authDomain:"word-kingdom-8173a.firebaseapp.com",
+  databaseURL:"https://word-kingdom-8173a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"word-kingdom-8173a",
+  storageBucket:"word-kingdom-8173a.firebasestorage.app",
+  messagingSenderId:"633485587057",
+  appId:"1:633485587057:web:eb57405f22a981325aa1d0"
+};
+const cfgOk=c=>!!(c&&c.databaseURL&&!/여기에|YOUR_/i.test(JSON.stringify(c)));
+const cfgRaw=cfgOk(window.FIREBASE_CONFIG)?window.FIREBASE_CONFIG:(cfgOk(BUILTIN_CONFIG)?BUILTIN_CONFIG:null);
+if(!cfgRaw){
   show('v-setup');
 } else {
   main();
@@ -810,7 +821,7 @@ $('tReset').onclick=async()=>{
   const open=V.cfg.mode==='open',dl=open&&V.cfg.deadline>now()?V.cfg.deadline:0;
   const u={cells:null,prot:null,log:null,'config/status':open?'playing':'lobby','config/endsAt':open?dl:0,'config/remainMs':0};
   if(open&&!dl)u['config/deadline']=0;
-  Object.keys(V.players).forEach(id=>{u[`players/${id}/correct`]=0;u[`players/${id}/wrong`]=0;u[`players/${id}/cap`]=0;u[`players/${id}/streak`]=0;u[`players/${id}/mastered`]=null});
+  Object.keys(V.players).forEach(id=>{u[`players/${id}/correct`]=0;u[`players/${id}/wrong`]=0;u[`players/${id}/cap`]=0;u[`players/${id}/streak`]=0;u[`players/${id}/lastCap`]=null;u[`players/${id}/mastered`]=null});
   u.wstats=null;
   try{await update(ref(db,`rooms/${code}`),u);endGuard=false;toast('초기화했어요')}catch(e){toast('실패: '+e.message,4000)}
 };
@@ -950,7 +961,7 @@ async function submitAnswer(val,timeout,btn){
 }
 
 /* ---------------- 땅 차지 계획 (한 번에 저장) ---------------- */
-const newPlan=()=>({u:{},pend:{},cap:0,logs:[]});
+const newPlan=()=>({u:{},pend:{},cap:0,logs:[],capKeys:[]});
 const ownP=(plan,x,y)=>{const v=plan.pend[key(x,y)];return v!==undefined?v:owner(x,y)};
 // 포위 계산에서 "빼앗을 수 없는 칸"(다른 모둠 근거지 + 보호 중인 다른 모둠 땅)
 function seedsFor(t,plan){
@@ -969,6 +980,8 @@ function planCapture(x,y,plan){
   plan.u[`cells/${k}`]=t;plan.u[`prot/${k}`]=null;
   enc.forEach(e=>{plan.u[`cells/${e}`]=t;plan.u[`prot/${e}`]=null;plan.pend[e]=t});
   const gained=1+enc.length;plan.cap+=gained;
+  plan.capKeys=[k,...enc];
+  plan.u[`players/${pid}/lastCap`]=plan.capKeys.join(',');   // 방금 차지한 칸 (땅 보호 아이템 대상)
   plan.logs.push({t,text:gained>1?`${p.name}(${V.cfg.teams[t].name}) 포위 성공! +${gained}칸 🎉`:`${p.name}(${V.cfg.teams[t].name})이(가) 땅을 차지했어요`});
   return gained;
 }
@@ -976,7 +989,11 @@ function planCapture(x,y,plan){
 function planItem(plan){
   const t=myTeam(),p=myPlayer(),{W,H}=V.cfg,hours=V.cfg.protectHours||21,tn=V.cfg.teams[t].name;
   const nb=[[1,0],[-1,0],[0,1],[0,-1]];
+  // 땅 보호 대상 = 방금 차지한 칸 (이번 문제로 차지했으면 그 칸, 아니면 이 학생이 마지막으로 차지한 칸)
+  let shieldKeys=plan.capKeys.length?plan.capKeys.slice():String((myPlayer()||{}).lastCap||'').split(',');
+  shieldKeys=shieldKeys.filter(k=>/^\d+_\d+$/.test(k)&&(()=>{const [x,y]=k.split('_').map(Number);return !isBase(x,y)&&ownP(plan,x,y)===t})());
   let kind=Math.random()<.5?'shield':'free';
+  if(kind==='shield'&&!shieldKeys.length)kind='free';
   const freed=[];
   if(kind==='free'){
     for(let i=0;i<2;i++){
@@ -993,7 +1010,7 @@ function planItem(plan){
       const k=src[Math.floor(Math.random()*src.length)];
       plan.pend[k]=t;plan.u[`cells/${k}`]=t;plan.u[`prot/${k}`]=null;freed.push(k);
     }
-    if(!freed.length)kind='shield';
+    if(!freed.length){if(!shieldKeys.length)return null;kind='shield'}
   }
   if(kind==='free'){
     const enc=enclosure(W,H,t,(cx,cy)=>ownP(plan,cx,cy),seedsFor(t,plan));
@@ -1003,11 +1020,8 @@ function planItem(plan){
     return {kind:'free',n:freed.length,extra:enc.length};
   }
   const until=now()+hours*3600000;let n=0;
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-    if(isBase(x,y)||ownP(plan,x,y)!==t)continue;
-    plan.u[`prot/${key(x,y)}`]=until;n++;
-  }
-  plan.logs.push({t,text:`${p.name}(${tn}) ${STREAK_N}연속 정답! 🛡️ 땅 ${n}칸 ${hours}시간 보호`});
+  shieldKeys.forEach(k=>{plan.u[`prot/${k}`]=until;n++});
+  plan.logs.push({t,text:`${p.name}(${tn}) ${STREAK_N}연속 정답! 🛡️ 방금 차지한 땅 ${n}칸 ${hours}시간 보호`});
   return {kind:'shield',hours,n};
 }
 function finishPlan(plan){
@@ -1038,7 +1052,7 @@ function showItem(it){
     $('itemEmoji').textContent=it.kind==='shield'?'🛡️':'🎁';
     $('itemTitle').textContent=it.kind==='shield'?`땅 보호 ${it.hours||hours}시간!`:`땅 ${it.n}칸 무료 획득!`;
     $('itemDesc').textContent=it.kind==='shield'
-      ?`${STREAK_N}연속 정답! 지금 우리 모둠 땅 ${it.n}칸이 ${it.hours||hours}시간 동안 빼앗기지 않아요. (아이템은 바로 사용돼요)`
+      ?`${STREAK_N}연속 정답! 방금 차지한 땅 ${it.n}칸이 ${it.hours||hours}시간 동안 빼앗기지 않아요. (아이템은 바로 사용돼요)`
       :`${STREAK_N}연속 정답! 우리 땅 옆의 ${it.n}칸을 공짜로 차지했어요.${it.extra?` 포위 보너스 +${it.extra}칸!`:''} (아이템은 바로 사용돼요)`;
     const m=$('itemModal');m.classList.remove('hidden');
     let done=false,tm=null;
@@ -1130,7 +1144,7 @@ function showRules(){
     <li>🧱 우리 땅으로 빙 둘러싸면 안쪽이 한 번에 우리 땅! 🏰 근거지는 빼앗을 수 없어요.</li>
     <li>🏅 등급: ${RANKS.map((r,i)=>i?`${r.emoji} ${r.name} ${th[i]}칸~`:`${r.emoji} ${r.name}`).join(' → ')}</li>
     <li>👑 땅이 가장 많은 모둠에 왕관!</li>
-    ${c.items!==false?`<li>🔥 <b>${STREAK_N}연속 정답</b>이면 아이템이 <b>바로 자동 사용</b>돼요 (모아 둘 수 없어요)<br>🛡️ 땅 보호: 지금 가진 우리 땅이 ${hours}시간 동안 안전 · 🎁 공짜 땅 2칸<br>틀리거나 시간이 지나면 연속 기록이 0으로 돌아가요.</li>`:''}
+    ${c.items!==false?`<li>🔥 <b>${STREAK_N}연속 정답</b>이면 아이템이 <b>바로 자동 사용</b>돼요 (모아 둘 수 없어요)<br>🛡️ 땅 보호: 방금 차지한 땅이 ${hours}시간 동안 안전 · 🎁 공짜 땅 2칸<br>틀리거나 시간이 지나면 연속 기록이 0으로 돌아가요.</li>`:''}
   </ul>`;
   $('rulesModal').classList.remove('hidden');
 }
