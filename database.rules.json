@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": true,
+        ".write": true,
+        "cells": {
+          "$cell": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 6"
+          }
+        },
+        "players": {
+          "$pid": {
+            "name": {
+              ".validate": "newData.isString() && newData.val().length <= 12"
+            }
+          }
+        }
+      }
+    }
+  }
+}

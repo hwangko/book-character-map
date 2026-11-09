@@ -1,12 +1,1155 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>독서 인물 관계도 창작 도구</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#14213a">
+<title>단어왕국 땅따먹기</title>
+<style>
+:root{--bg:#14213a;--panel:#1e2f52;--panel2:#12203d;--ink:#f4f6fb;--mute:#9fb0d0;--gold:#ffd166;--ok:#2ecc71;--bad:#e74c3c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+.hidden{display:none!important}
+h1{margin:0;font-size:28px}h2{margin:0 0 6px}
+.lead{color:var(--mute);margin:6px 0 20px}
+.wrap{max-width:780px;margin:0 auto;padding:22px 16px 60px}
+.card{background:var(--panel);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+.card h3{margin:0 0 10px;font-size:17px;color:var(--gold)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:8px}
+label{font-size:15px;color:var(--mute)}
+select,input[type=text],input[type=number],input[type=password],textarea{background:var(--panel2);color:var(--ink);border:1px solid #3a4f7e;border-radius:8px;padding:10px 12px;font-size:16px;font-family:inherit}
+textarea{width:100%;min-height:200px;line-height:1.5}
+.btn{background:var(--gold);color:#222;border:0;border-radius:12px;padding:12px 22px;font-size:18px;font-weight:700}
+.btn.sub{background:#34476f;color:var(--ink)}
+.btn.red{background:#7a2a2a;color:#fff}
+.btn.sm{padding:6px 12px;font-size:14px;border-radius:8px}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5}
+small.mute{color:var(--mute);font-weight:400}
+.teamin{display:flex;align-items:center;gap:8px}
+.teamin .dot{width:22px;height:22px;border-radius:6px;display:inline-block}
+.chip{background:var(--panel);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:700}
+.chip.click{cursor:pointer;background:var(--gold);color:#222}
+#toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-90px);background:#000d;color:#fff;padding:10px 18px;border-radius:12px;z-index:50;transition:.25s;max-width:92vw;text-align:center;font-size:16px}
+#toast.on{transform:translate(-50%,0)}
+.roomlink{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.myroom{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+/* 팀 선택 */
+.tbtn{display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--panel);border:0;border-left:14px solid;border-radius:14px;color:var(--ink);padding:16px 18px;font-size:22px;font-weight:800;margin-bottom:10px}
+.tbtn small{color:var(--mute);font-weight:500;font-size:15px}
+/* 게임 화면 */
+#v-game{height:100vh;height:100dvh;display:flex;flex-direction:column;padding:8px 10px;gap:6px}
+#gHead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#gHead .hl,#gHead .hr{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#gTitle{font-size:18px}
+.dot{width:10px;height:10px;border-radius:50%;background:#e74c3c;display:inline-block}
+.dot.on{background:#2ecc71}
+#scores{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.score{flex:1 0 118px;background:var(--panel);border-radius:10px;padding:5px 8px;border:3px solid transparent;position:relative;overflow:hidden}
+.score.mine{border-color:var(--gold)}
+.score .n{font-size:13px;font-weight:700;display:flex;gap:5px;align-items:center;white-space:nowrap}
+.score .c{font-size:22px;font-weight:800;line-height:1.1}
+.score .c small{font-size:11px;color:var(--mute);font-weight:500}
+.score .bar2{height:4px;border-radius:2px;margin-top:3px}
+.score.lead{box-shadow:0 0 12px #ffd16699}
+.score .rk{display:flex;gap:6px;align-items:center;margin-top:1px;font-size:12px}
+.score .rb{padding:0 8px;border-radius:999px;font-weight:800;color:#1a1a1a;white-space:nowrap}
+.rb.r0{background:#9fb0d0}.rb.r1{background:#7ed6a0}.rb.r2{background:#ffd166}.rb.r3{background:#ff9f6e}
+.score .sh{font-weight:800;color:#8fe3ff}
+.score .nx{font-size:11px;color:var(--mute);white-space:nowrap}
+#gMain{flex:1;display:flex;gap:10px;min-height:0}
+#boardCol{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;gap:4px}
+#ticker{font-size:14px;color:var(--mute);min-height:20px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#boardWrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
+#board{display:grid;gap:2px;width:100%;position:relative}
+.cell{aspect-ratio:1/1;border-radius:5px;background:#2a3d68;border:0;padding:0;color:#fff;font-size:calc(var(--cs,30px)*.55);line-height:1;display:flex;align-items:center;justify-content:center;transition:background .25s}
+.cell{position:relative}
+.cell.base{box-shadow:inset 0 0 0 2px #fff,0 0 8px #fff8}
+.cell.prot{box-shadow:inset 0 0 0 2px #8fe3ff}
+.cell.prot::after{content:'🛡️';position:absolute;right:0;bottom:0;font-size:calc(var(--cs,30px)*.34);line-height:1}
+.cell.can{outline:3px dashed var(--gold);outline-offset:-3px}
+.cell.flash{animation:pop .5s}
+@keyframes pop{0%{transform:scale(.3)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+#veil{position:absolute;inset:0;background:#0b1530cc;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;text-align:center;border-radius:10px;padding:20px}
+#me{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:15px;flex-wrap:wrap;min-height:34px}
+#tools{width:310px;overflow-y:auto;background:var(--panel);border-radius:14px;padding:12px 14px;font-size:15px}
+#tools h4{margin:14px 0 6px;color:var(--gold);font-size:15px}
+#tools h4:first-child{margin-top:0}
+.bigcode{font-size:44px;font-weight:900;letter-spacing:8px;color:var(--gold);text-align:center;margin:4px 0}
+.ctrl{display:flex;flex-wrap:wrap;gap:6px}
+.plist div,.loglist div{display:flex;justify-content:space-between;gap:6px;padding:4px 0;border-bottom:1px solid #2c4170}
+.loglist div{justify-content:flex-start;font-size:13px;color:#cdd8f0}
+@media (max-width:900px){#gMain{flex-direction:column}#tools{width:100%;max-height:34vh}}
+/* 모달 */
+.modal{position:fixed;inset:0;background:rgba(5,10,25,.82);display:flex;align-items:flex-start;justify-content:center;z-index:20;padding:max(3vh,env(safe-area-inset-top)) 12px 12px;overflow-y:auto}
+.box{background:var(--panel);border-radius:20px;padding:20px;width:100%;max-width:560px;text-align:center}
+.box .who{font-size:15px;color:var(--mute)}
+.box .q{font-size:clamp(30px,8vw,56px);font-weight:800;margin:10px 0 4px;color:var(--gold);word-break:keep-all}
+.box .hint{font-size:26px;letter-spacing:5px;min-height:34px;color:#c8d4ee;font-family:ui-monospace,Consolas,monospace}
+.bar{height:12px;background:var(--panel2);border-radius:6px;overflow:hidden;margin:8px 0 12px}
+.bar>i{display:block;height:100%;background:var(--ok);width:100%}
+#ans{width:100%;font-size:26px;text-align:center;padding:12px;margin-bottom:10px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choices button{background:#2a3d68;color:var(--ink);border:0;border-radius:12px;padding:16px 8px;font-size:22px;font-weight:700;min-height:64px}
+.choices button:active{background:#3b5390}
+.choices button.right{background:var(--ok);color:#042}
+.choices button.wrong{background:var(--bad)}
+.result{font-size:24px;font-weight:800;min-height:32px;margin-top:10px}
+.result.ok{color:var(--ok)}.result.bad{color:var(--bad)}
+.rank{text-align:left;margin:12px 0}
+.rank div{display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;background:var(--panel2);margin-bottom:6px;font-size:19px;font-weight:700}
+.rank div:first-child{background:#5b4a14;color:var(--gold)}
+.rank h4{margin:14px 0 6px;color:var(--gold)}
+.rank small{font-weight:500;color:var(--mute);font-size:14px}
+#cpWord{font-family:ui-monospace,Consolas,monospace;letter-spacing:4px;margin:12px 0 2px}
+#cpWord span{color:#8fa4cf}
+#cpWord span.ok{color:var(--ok)}
+#cpWord span.nx{color:var(--gold);border-bottom:4px solid var(--gold)}
+#cpMean{font-size:22px;color:#c8d4ee;margin-bottom:4px}
+.cpDots{font-size:26px;letter-spacing:6px;color:var(--gold);margin:6px 0}
+#cpIn{width:100%;font-size:28px;text-align:center;padding:12px;margin:8px 0;font-family:ui-monospace,Consolas,monospace}
+.cpNote{font-size:13px;color:var(--mute);margin:8px 0 10px}
+.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.rl{padding-left:20px;line-height:1.75;font-size:16px;margin:8px 0}
+.rl li{margin-bottom:6px}
+#tools label{display:block;color:var(--mute);margin-bottom:6px;font-size:14px}
+#tools select{width:100%;font-size:14px;padding:7px 8px}
+</style>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- Firebase 설정 안내 -->
+<section id="v-setup" class="screen hidden"><div class="wrap">
+  <h1>🔧 Firebase 설정이 필요해요</h1>
+  <p class="lead"><b>firebase-config.js</b> 파일에 Firebase 웹앱 설정값을 붙여넣어 주세요. 자세한 순서는 <b>README.md</b>에 있어요.</p>
+</div></section>
+
+<!-- 첫 화면 -->
+<section id="v-home" class="screen"><div class="wrap">
+  <h1>🏰 단어왕국 땅따먹기</h1>
+  <p class="lead">영어 단어를 맞혀 우리 모둠 땅을 넓히고, 다른 모둠 땅을 빼앗아요!</p>
+  <div class="card">
+    <h3>🎒 학생으로 참여</h3>
+    <div class="row">
+      <input id="jCode" maxlength="4" placeholder="방 코드" size="6" style="text-transform:uppercase;font-size:22px;letter-spacing:4px" autocapitalize="characters" autocomplete="off">
+      <input id="jName" maxlength="8" placeholder="별명(이름)" size="10" autocomplete="off">
+      <button class="btn" id="jBtn">입장</button>
+    </div>
+    <small class="mute">실명 대신 별명이나 번호를 써도 좋아요.</small>
+  </div>
+  <div class="card">
+    <h3>👩‍🏫 선생님</h3>
+    <div class="row"><button class="btn" id="newRoomBtn">새 방 만들기</button></div>
+    <div id="myRooms"></div>
+    <div class="row" style="margin-top:8px">
+      <input id="rCode" maxlength="4" placeholder="방 코드" size="6" style="text-transform:uppercase" autocapitalize="characters" autocomplete="off">
+      <input id="rPin" type="password" inputmode="numeric" maxlength="8" placeholder="선생님 비밀번호" size="12" autocomplete="off">
+      <button class="btn sub" id="resumeBtn">이어하기</button>
+      <button class="btn red sm" id="rDelBtn">방 삭제</button>
+    </div>
+  </div>
+</div></section>
+
+<!-- 방 만들기 -->
+<section id="v-create" class="screen hidden"><div class="wrap">
+  <h1>🛠 새 방 만들기</h1>
+  <p class="lead">한 번 만든 방은 데이터베이스에 저장돼서 나중에 이어서 할 수 있어요.</p>
+  <div class="card"><h3>1. 방 / 모둠</h3>
+    <div class="row">
+      <label>방 이름 <input type="text" id="cTitle" maxlength="20" value="6학년 단어왕국" size="16"></label>
+      <label>선생님 비밀번호(숫자, 선택) <input type="password" id="cPin" inputmode="numeric" maxlength="8" size="8"></label>
+    </div>
+    <div class="row">
+      <label>모둠 수 <select id="cTeams"></select></label>
+      <label>지도 크기 <select id="cGrid">
+        <option value="12x12">보통 (12×12 = 144칸)</option>
+        <option value="16x12">넓게 (16×12 = 192칸)</option>
+        <option value="20x14" selected>아주 넓게 (20×14 = 280칸)</option>
+        <option value="24x16">초대형 (24×16 = 384칸)</option>
+      </select></label>
+    </div>
+    <div id="cTeamNames" class="row"></div>
+    <small class="mute">모둠마다 2×2 크기의 근거지(🏰)가 지도에 자동 배치돼요. 근거지는 빼앗을 수 없어요.</small>
+  </div>
+  <div class="card"><h3>2. 진행 방식 / 문제 / 규칙</h3>
+    <div class="row">
+      <label>진행 방식 <select id="cMode">
+        <option value="open" selected>상시 진행 (선생님이 없어도 학생이 아무 때나 접속해서 계속)</option>
+        <option value="class">수업용 (선생님이 시작·종료 버튼으로 진행)</option>
+      </select></label>
+      <label id="cEndWrap">마감일(선택, 비우면 계속) <input type="date" id="cEnd"></label>
+    </div>
+    <div class="row">
+      <label>출제 방향 <select id="cDir">
+        <option value="k2e" selected>뜻 → 영어 단어</option>
+        <option value="e2k">영어 단어 → 뜻</option>
+        <option value="mix">섞어서</option>
+      </select></label>
+      <span class="chip">땅 1칸 = 객관식 2문제 + 주관식 1문제 모두 정답</span>
+    </div>
+    <div class="row">
+      <label>문제 1개당 제한 시간(초) <input type="number" id="cLimit" min="5" max="60" value="20" style="width:70px"></label>
+      <label>오답 후 쉬는 시간(초) <input type="number" id="cWrong" min="0" max="30" value="5" style="width:70px"></label>
+      <label id="cDurWrap" class="hidden">게임 시간(분, 0=무제한) <input type="number" id="cDur" min="0" max="120" value="20" style="width:70px"></label>
+    </div>
+    <div class="row">
+      <label>주관식 오답 시 <select id="cWrongMode">
+        <option value="retry" selected>바로 종료 (잠깐 쉬고 처음부터 다시 도전)</option>
+        <option value="copy">틀린 단어를 7번 따라 쓰면 통과</option>
+      </select></label>
+    </div>
+    <div class="row">
+      <label>5연속 정답 아이템 <select id="cItems"><option value="on" selected>켜기</option><option value="off">끄기</option></select></label>
+      <label>땅 보호 시간(시간) <input type="number" id="cProt" min="1" max="72" value="21" style="width:70px"></label>
+    </div>
+    <small class="mute">아이템은 5연속 정답마다 🛡️땅 보호 또는 🎁2칸 무료 중 하나가 자동으로 바로 사용돼요. 따라 쓰기는 복사·붙여넣기가 막혀 있어요.</small>
+  </div>
+  <div class="card"><h3>3. 단어 목록 <small class="mute">(한 줄에 하나: 영어,뜻 / 뜻이 여러 개면 "/" 로 구분 / 8개 이상)</small></h3>
+    <textarea id="cWords" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn sub sm" id="cWordsReset" type="button">기본 단어로 되돌리기</button></div>
+  </div>
+  <div class="row"><button class="btn sub" id="cBack">뒤로</button><button class="btn" id="cGo" style="flex:1;font-size:22px">방 만들기</button></div>
+</div></section>
+
+<!-- 모둠 선택 -->
+<section id="v-team" class="screen hidden"><div class="wrap">
+  <h2 id="tsTitle"></h2>
+  <p class="lead">우리 모둠을 골라요</p>
+  <div id="tsList"></div>
+  <button class="btn sub" id="tsBack">뒤로</button>
+</div></section>
+
+<!-- 게임 -->
+<section id="v-game" class="screen hidden">
+  <div id="gHead">
+    <div class="hl"><b id="gTitle"></b><span class="chip" id="gCode"></span></div>
+    <div class="hr"><span id="conn" class="dot" title="연결 상태"></span><span class="chip" id="gStatus"></span><span class="chip" id="gTimer"></span><button class="btn sub sm" id="rulesBtn">📖 규칙</button><button class="btn sub sm" id="leaveBtn">나가기</button></div>
+  </div>
+  <div id="scores"></div>
+  <div id="gMain">
+    <div id="boardCol">
+      <div id="ticker"></div>
+      <div id="boardWrap"><div id="board"></div><div id="veil" class="hidden"></div></div>
+      <div id="me"></div>
+    </div>
+    <aside id="tools" class="hidden">
+      <h4>학생 접속 코드</h4>
+      <div class="bigcode" id="tCode"></div>
+      <div class="roomlink"><input type="text" id="tLink" readonly style="flex:1;min-width:0;font-size:13px"><button class="btn sub sm" id="tCopy">복사</button></div>
+      <h4>진행</h4>
+      <div class="ctrl" id="tCtrl"></div>
+      <h4>설정 바꾸기</h4>
+      <label>주관식 오답 시 <select id="tWrongMode"><option value="retry">바로 종료 (다시 도전)</option><option value="copy">7번 따라 쓰면 통과</option></select></label>
+      <label>5연속 정답 아이템 <select id="tItems"><option value="on">켜기</option><option value="off">끄기</option></select></label>
+      <h4>개인 순위 (점령 칸수 · 단어 마스터율)</h4>
+      <div class="plist" id="tPlayers"></div>
+      <h4>단어 마스터율 (한 번이라도 맞힌 단어)</h4>
+      <div class="plist" id="tMastery"></div>
+      <h4>많이 틀린 단어</h4>
+      <div class="plist" id="tHard"></div>
+      <h4>활동 기록</h4>
+      <div class="loglist" id="tLog"></div>
+      <h4>관리</h4>
+      <div class="ctrl"><button class="btn red sm" id="tReset">지도 초기화</button><button class="btn red sm" id="tDelete">방 삭제</button></div>
+    </aside>
+  </div>
+</section>
+
+<!-- 문제 -->
+<div id="qModal" class="modal hidden">
+  <form class="box" id="qForm" autocomplete="off">
+    <div class="who" id="qWho"></div>
+    <div class="q" id="qText"></div>
+    <div class="hint" id="qHint"></div>
+    <div class="bar"><i id="qBar"></i></div>
+    <div id="qType">
+      <input type="text" id="ans" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send">
+      <button class="btn" type="submit" id="qSubmit" style="width:100%">제출</button>
+    </div>
+    <div id="qChoice" class="choices hidden"></div>
+    <div class="result" id="qResult"></div>
+  </form>
+</div>
+
+<!-- 따라 쓰기 -->
+<div id="copyModal" class="modal hidden">
+  <div class="box">
+    <div class="who">✍️ 틀린 단어를 <b id="cpNeed">7</b>번 따라 써요 — 한 글자씩 직접 입력!</div>
+    <div class="q" id="cpWord"></div>
+    <div class="hint" id="cpMean"></div>
+    <div class="cpDots" id="cpDots"></div>
+    <input type="text" id="cpIn" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="text" enterkeyhint="done" aria-label="단어 따라 쓰기">
+    <div class="result" id="cpResult"></div>
+    <div class="cpNote">복사·붙여넣기, 자동완성 단어는 입력되지 않아요. 틀린 글자도 입력되지 않아요.<span id="cpNote2" class="hidden"><br>· (점)은 띄어쓰기예요. 스페이스바를 눌러요.</span></div>
+    <button class="btn sub sm" id="cpQuit" type="button">그만하고 나가기</button>
+  </div>
+</div>
+
+<!-- 아이템 -->
+<div id="itemModal" class="modal hidden" style="z-index:40;align-items:center">
+  <div class="box">
+    <div style="font-size:30px">🔥 5연속 정답!</div>
+    <div id="itemEmoji" style="font-size:84px;margin:6px 0"></div>
+    <h2 id="itemTitle" style="color:var(--gold)"></h2>
+    <p id="itemDesc" style="font-size:17px;line-height:1.6"></p>
+    <button class="btn" id="itemOk" style="width:100%">좋아요!</button>
+  </div>
+</div>
+
+<!-- 규칙 -->
+<div id="rulesModal" class="modal hidden" style="z-index:30">
+  <div class="box" style="text-align:left">
+    <h2>📖 게임 규칙</h2>
+    <div id="rulesBody"></div>
+    <button class="btn" id="rulesClose" style="width:100%;margin-top:8px">닫기</button>
+  </div>
+</div>
+
+<!-- 결과 -->
+<div id="endModal" class="modal hidden">
+  <div class="box">
+    <h1>🏆 게임 끝!</h1>
+    <div class="rank" id="rank"></div>
+    <button class="btn" id="endClose">닫기</button>
+  </div>
+</div>
+
+<!-- 순수 로직 (테스트 가능하도록 분리) -->
+<script id="logic">
+const WK=(function(){
+  const COLORS=['#e74c3c','#3498db','#27ae60','#f39c12','#9b59b6','#16a085'];
+  const EMOJI=['🦊','🐳','🐸','🦁','🦄','🐼'];
+  const POS={
+    2:[[.1,.5],[.9,.5]],
+    3:[[.1,.2],[.9,.2],[.5,.85]],
+    4:[[.1,.15],[.9,.15],[.1,.85],[.9,.85]],
+    5:[[.1,.15],[.9,.15],[.5,.5],[.1,.85],[.9,.85]],
+    6:[[.1,.15],[.5,.15],[.9,.15],[.1,.85],[.5,.85],[.9,.85]]
+  };
+  const key=(x,y)=>x+'_'+y;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function makeBases(n,W,H){
+    const map={};
+    POS[n].forEach(([fx,fy],t)=>{
+      const x0=clamp(Math.round(fx*(W-2)),0,W-2), y0=clamp(Math.round(fy*(H-2)),0,H-2);
+      for(let dy=0;dy<2;dy++)for(let dx=0;dx<2;dx++)map[key(x0+dx,y0+dy)]=t;
+    });
+    return map;
+  }
+  // t팀이 포위한 칸(키 배열). ownerFn(x,y)는 t가 새로 차지한 칸까지 반영된 소유자(-1=빈 칸)를 돌려줘야 해요.
+  // 가장자리에 닿은 칸 묶음과 다른 팀 근거지에 이어진 묶음은 포위된 것으로 보지 않아요.
+  function enclosure(W,H,t,ownerFn,otherBaseKeys){
+    const seen=Array.from({length:H},()=>Array(W).fill(false)), q=[];
+    const seed=(x,y)=>{ if(x<0||y<0||x>=W||y>=H||seen[y][x]||ownerFn(x,y)===t)return; seen[y][x]=true;q.push([x,y]); };
+    for(let x=0;x<W;x++){seed(x,0);seed(x,H-1)}
+    for(let y=0;y<H;y++){seed(0,y);seed(W-1,y)}
+    otherBaseKeys.forEach(k=>{const [x,y]=k.split('_').map(Number);seed(x,y)});
+    while(q.length){const [x,y]=q.pop();seed(x+1,y);seed(x-1,y);seed(x,y+1);seed(x,y-1)}
+    const out=[];
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(ownerFn(x,y)!==t&&!seen[y][x])out.push(key(x,y));
+    return out;
+  }
+  const norm=s=>String(s).toLowerCase().replace(/[.!?,]/g,'').replace(/\s+/g,' ').trim();
+  const normKo=s=>String(s).replace(/\s+/g,'').trim();
+  function parseWords(txt){
+    return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+      const k=l.search(/[,\t]/); if(k<0)return null;
+      const en=l.slice(0,k).trim(), ko=l.slice(k+1).trim();
+      return (en&&ko)?{en,ko}:null;
+    }).filter(Boolean);
+  }
+  function hashPin(s){let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+  return {COLORS,EMOJI,key,makeBases,enclosure,norm,normKo,parseWords,hashPin,shuffle};
+})();
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue, set, update, get, push, remove, increment, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const {COLORS,EMOJI,key,makeBases,enclosure,norm,normKo,parseWords,hashPin,shuffle}=WK;
+const DEFAULT_WORDS=`go camping,캠핑하러 가다
+visit,방문하다
+grandparents,조부모님
+ride a bike,자전거를 타다
+go fishing,낚시하러 가다
+watch a movie,영화를 보다
+play soccer,축구를 하다
+go shopping,쇼핑하러 가다
+read a book,책을 읽다
+do homework,숙제를 하다
+weekend,주말
+vacation,방학/휴가
+tomorrow,내일
+next week,다음 주
+museum,박물관
+library,도서관
+beach,해변
+mountain,산
+airport,공항
+hospital,병원
+dentist,치과 의사
+teacher,선생님
+farmer,농부
+doctor,의사
+singer,가수
+scientist,과학자
+police officer,경찰관
+firefighter,소방관
+delicious,맛있는
+beautiful,아름다운
+difficult,어려운
+important,중요한
+dangerous,위험한
+expensive,비싼
+healthy,건강한
+borrow,빌리다
+practice,연습하다
+travel,여행하다
+decide,결정하다`;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden');window.scrollTo(0,0)}
+function toast(msg,ms=2400){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),ms)}
+
+const cfgRaw=window.FIREBASE_CONFIG;
+if(!cfgRaw||!cfgRaw.databaseURL||/여기에|YOUR_/i.test(JSON.stringify(cfgRaw))){
+  show('v-setup');
+} else {
+  main();
+}
+
+function main(){
+const app=initializeApp(cfgRaw);
+const db=getDatabase(app);
+
+/* ---------------- 전역 상태 ---------------- */
+const V={cfg:null,cells:{},players:{},prot:{},protNext:0,playersLoaded:false,log:[],offset:0};
+let code=null, role=null, pid=null, subs=[], tick=null;
+let Q=null, qTimer=null, cdUntil=0, pool=[], endedShown=false, endGuard=false;
+const now=()=>Date.now()+V.offset;
+
+onValue(ref(db,'.info/serverTimeOffset'),s=>{V.offset=s.val()||0});
+onValue(ref(db,'.info/connected'),s=>{$('conn').classList.toggle('on',!!s.val())});
+
+/* ---------------- 파생값 ---------------- */
+const baseMap=()=>V.cfg.baseMap||{};
+const isBase=(x,y)=>baseMap()[key(x,y)]!==undefined;
+function owner(x,y){const k=key(x,y),b=baseMap()[k];if(b!==undefined)return b;const v=V.cells[k];return v===undefined?-1:v}
+const myPlayer=()=>V.players[pid];
+const myTeam=()=>{const p=myPlayer();return p?p.team:-1};
+function effStatus(){
+  const c=V.cfg;if(!c)return 'none';
+  if(c.status==='playing'&&c.endsAt&&now()>=c.endsAt)return 'ended';
+  return c.status;
+}
+function counts(){
+  const c=Array(V.cfg.n).fill(0);
+  for(let y=0;y<V.cfg.H;y++)for(let x=0;x<V.cfg.W;x++){const o=owner(x,y);if(o>=0)c[o]++}
+  return c;
+}
+const isProt=(x,y)=>(V.prot[key(x,y)]||0)>now();
+function calcProtNext(){const n=now();let m=0;for(const k in V.prot){const v=V.prot[k];if(v>n&&(!m||v<m))m=v}V.protNext=m}
+function canAttack(x,y,t){
+  if(isBase(x,y)||owner(x,y)===t||isProt(x,y))return false;
+  return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>{
+    const nx=x+dx,ny=y+dy;return nx>=0&&ny>=0&&nx<V.cfg.W&&ny<V.cfg.H&&owner(nx,ny)===t;
+  });
+}
+
+/* ---------------- 첫 화면 ---------------- */
+const params=new URLSearchParams(location.search);
+if(params.get('room'))$('jCode').value=params.get('room').toUpperCase().slice(0,4);
+$('jName').value=localStorage.getItem('wk_name')||'';
+function myRooms(){try{return JSON.parse(localStorage.getItem('wk_rooms')||'[]')}catch(e){return[]}}
+function rememberRoom(c,title){const l=myRooms().filter(r=>r.code!==c);l.unshift({code:c,title});localStorage.setItem('wk_rooms',JSON.stringify(l.slice(0,8)))}
+function forgetRoom(c){localStorage.setItem('wk_rooms',JSON.stringify(myRooms().filter(r=>r.code!==c)))}
+function drawMyRooms(){
+  const box=$('myRooms');box.innerHTML='';
+  myRooms().forEach(r=>{
+    const d=document.createElement('div');d.className='myroom';
+    d.innerHTML=`<span class="chip">${esc(r.code)}</span><span>${esc(r.title||'')}</span>`;
+    const b=document.createElement('button');b.className='btn sub sm';b.textContent='이어하기';
+    b.onclick=()=>{$('rCode').value=r.code;$('resumeBtn').click()};
+    const x=document.createElement('button');x.className='btn red sm';x.textContent='삭제';
+    x.onclick=()=>deleteRoomFlow(r.code);
+    d.appendChild(b);d.appendChild(x);box.appendChild(d);
+  });
+}
+async function deleteRoomFlow(c,pinGiven){
+  try{
+    const s=await get(ref(db,`rooms/${c}/config`));
+    if(!s.exists()){forgetRoom(c);drawMyRooms();toast('이미 없는 방이라 목록에서만 지웠어요');return}
+    const cfg=s.val();
+    if(cfg.pinHash){
+      let pin=pinGiven;
+      if(pin===undefined||pin===''){pin=prompt('선생님 비밀번호를 입력하세요');if(pin===null)return}
+      if(hashPin(String(pin).trim())!==cfg.pinHash){toast('비밀번호가 맞지 않아요');return}
+    }
+    if(!confirm(`방 ${c} (${cfg.title||''})을(를) 완전히 삭제할까요?\n모든 기록이 사라지고 복구할 수 없어요.`))return;
+    await remove(ref(db,`rooms/${c}`));forgetRoom(c);drawMyRooms();toast('방을 삭제했어요');
+  }catch(e){toast('삭제에 실패했어요: '+e.message,4000)}
+}
+function goHome(){teardown();code=null;role=null;closeQ(true);closeCopy();$('itemModal').classList.add('hidden');$('rulesModal').classList.add('hidden');$('endModal').classList.add('hidden');drawMyRooms();show('v-home')}
+drawMyRooms();
+
+$('jBtn').onclick=async()=>{
+  const c=$('jCode').value.trim().toUpperCase(), name=$('jName').value.trim();
+  if(c.length<4||!name){toast('방 코드와 이름을 입력해 주세요');return}
+  try{
+    const s=await get(ref(db,`rooms/${c}/config`));
+    if(!s.exists()){toast('그런 방이 없어요. 코드를 확인해 주세요');return}
+    localStorage.setItem('wk_name',name);
+    pid=localStorage.getItem('wk_pid_'+c);
+    if(pid){
+      const p=await get(ref(db,`rooms/${c}/players/${pid}`));
+      if(p.exists()){await update(ref(db,`rooms/${c}/players/${pid}`),{name});enterRoom(c,'student');return}
+    }
+    pid=null;
+    await showTeamSelect(c,name,s.val());
+  }catch(e){toast('연결에 실패했어요: '+e.message,4000)}
+};
+
+async function showTeamSelect(c,name,cfg){
+  const ps=(await get(ref(db,`rooms/${c}/players`))).val()||{};
+  const cnt=Array(cfg.n).fill(0);Object.values(ps).forEach(p=>{if(p.team>=0&&p.team<cfg.n)cnt[p.team]++});
+  $('tsTitle').textContent=`${name} 학생, 어느 모둠인가요?`;
+  const box=$('tsList');box.innerHTML='';
+  cfg.teams.forEach((t,i)=>{
+    const b=document.createElement('button');b.className='tbtn';b.style.borderLeftColor=COLORS[i];
+    b.innerHTML=`<span>${EMOJI[i]} ${esc(t.name)}</span><small>${cnt[i]}명</small>`;
+    b.onclick=async()=>{
+      try{
+        if(!pid){
+          pid='p'+Math.random().toString(36).slice(2,10);
+          await set(ref(db,`rooms/${c}/players/${pid}`),{name,team:i,correct:0,wrong:0,cap:0,joined:Date.now()});
+          localStorage.setItem('wk_pid_'+c,pid);
+        } else {
+          await update(ref(db,`rooms/${c}/players/${pid}`),{team:i});
+        }
+        enterRoom(c,'student');
+      }catch(e){toast('저장에 실패했어요: '+e.message,4000)}
+    };
+    box.appendChild(b);
+  });
+  show('v-team');
+}
+$('tsBack').onclick=()=>{ if(pid&&code){enterRoom(code,'student')} else goHome() };
+
+/* ---------------- 방 만들기 ---------------- */
+(function initCreate(){
+  const sel=$('cTeams');
+  for(let i=2;i<=6;i++){const o=document.createElement('option');o.value=i;o.textContent=i+'개 모둠';if(i===4)o.selected=true;sel.appendChild(o)}
+  sel.onchange=drawNames;drawNames();
+  $('cWords').value=DEFAULT_WORDS;
+  $('cWordsReset').onclick=()=>{$('cWords').value=DEFAULT_WORDS};
+})();
+function drawNames(){
+  const n=+$('cTeams').value,box=$('cTeamNames'),old=[...box.querySelectorAll('input')].map(i=>i.value);
+  box.innerHTML='';
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');d.className='teamin';
+    d.innerHTML=`<span class="dot" style="background:${COLORS[i]}"></span><input type="text" maxlength="8" size="9" value="${esc(old[i]||(i+1)+'모둠')}">`;
+    box.appendChild(d);
+  }
+}
+$('newRoomBtn').onclick=()=>show('v-create');
+$('cBack').onclick=()=>show('v-home');
+$('cMode').onchange=()=>{const open=$('cMode').value==='open';$('cEndWrap').classList.toggle('hidden',!open);$('cDurWrap').classList.toggle('hidden',open)};
+const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const genCode=()=>Array.from({length:4},()=>CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]).join('');
+$('cGo').onclick=async()=>{
+  const words=parseWords($('cWords').value);
+  if(words.length<8){toast('단어를 8개 이상 입력해 주세요 (형식: 영어,뜻)',3500);return}
+  const n=+$('cTeams').value, [W,H]=$('cGrid').value.split('x').map(Number);
+  const names=[...$('cTeamNames').querySelectorAll('input')].map((i,k)=>i.value.trim()||(k+1)+'모둠');
+  const pin=$('cPin').value.trim();
+  const mode=$('cMode').value;
+  let deadline=0;
+  if(mode==='open'&&$('cEnd').value){
+    deadline=new Date($('cEnd').value+'T23:59:59').getTime();
+    if(!(deadline>Date.now())){toast('마감일은 오늘 이후로 정해 주세요',3000);return}
+  }
+  const cfg={
+    mode,deadline,
+    title:$('cTitle').value.trim()||'단어왕국',n,teams:names.map(name=>({name})),W,H,
+    dir:$('cDir').value,wrongMode:$('cWrongMode').value,items:$('cItems').value!=='off',protectHours:Math.max(1,Math.min(72,+$('cProt').value||21)),
+    limit:Math.max(5,+$('cLimit').value||20),wrongCd:Math.max(0,+$('cWrong').value||0),
+    durationMin:mode==='class'?Math.max(0,+$('cDur').value||0):0,
+    pinHash:pin?hashPin(pin):'',words,baseMap:makeBases(n,W,H),
+    status:mode==='open'?'playing':'lobby',endsAt:mode==='open'?deadline:0,remainMs:0,createdAt:Date.now()
+  };
+  $('cGo').disabled=true;
+  try{
+    let c;
+    for(let i=0;i<20;i++){c=genCode();if(!(await get(ref(db,`rooms/${c}/config`))).exists())break}
+    await set(ref(db,`rooms/${c}/config`),cfg);
+    rememberRoom(c,cfg.title);
+    enterRoom(c,'teacher');
+  }catch(e){toast('방 만들기에 실패했어요: '+e.message,4500)}
+  $('cGo').disabled=false;
+};
+$('rDelBtn').onclick=()=>{
+  const c=$('rCode').value.trim().toUpperCase();
+  if(c.length<4){toast('삭제할 방 코드를 입력해 주세요');return}
+  deleteRoomFlow(c,$('rPin').value.trim());
+};
+$('resumeBtn').onclick=async()=>{
+  const c=$('rCode').value.trim().toUpperCase(),pin=$('rPin').value.trim();
+  if(c.length<4){toast('방 코드를 입력해 주세요');return}
+  try{
+    const s=await get(ref(db,`rooms/${c}/config`));
+    if(!s.exists()){toast('그런 방이 없어요');return}
+    const cfg=s.val();
+    if(cfg.pinHash&&hashPin(pin)!==cfg.pinHash){toast('비밀번호가 맞지 않아요');return}
+    rememberRoom(c,cfg.title);enterRoom(c,'teacher');
+  }catch(e){toast('연결에 실패했어요: '+e.message,4000)}
+};
+
+/* ---------------- 방 입장 / 구독 ---------------- */
+function teardown(){subs.forEach(u=>{try{u()}catch(e){}});subs=[];clearInterval(tick);tick=null}
+async function enterRoom(c,r){
+  teardown();code=c;role=r;
+  V.cells={};V.players={};V.prot={};V.protNext=0;V.wstats={};V.playersLoaded=false;V.log=[];pool=[];endedShown=false;endGuard=false;cdUntil=0;
+  const base=`rooms/${c}`;
+  let s;
+  try{s=await get(ref(db,base+'/config'))}catch(e){toast('연결에 실패했어요: '+e.message,4000);goHome();return}
+  if(!s.exists()){toast('방을 찾을 수 없어요');goHome();return}
+  V.cfg=s.val();
+  buildBoard();
+  $('tools').classList.toggle('hidden',r!=='teacher');
+  $('tCode').textContent=c;
+  $('tLink').value=location.href.split('?')[0].split('#')[0]+'?room='+c;
+  $('gTitle').textContent=V.cfg.title;$('gCode').textContent='코드 '+c;
+  show('v-game');
+  subs.push(onValue(ref(db,base+'/config'),s=>{
+    if(!s.exists()){roomGone();return}
+    V.cfg=s.val();renderAll();
+  }));
+  subs.push(onValue(ref(db,base+'/cells'),s=>{
+    const old=V.cells;V.cells=s.val()||{};renderBoard(old);renderScores();
+  }));
+  subs.push(onValue(ref(db,base+'/players'),s=>{
+    V.players=s.val()||{};V.playersLoaded=true;
+    if(role==='student'&&!myPlayer()){toast('참가 정보가 없어서 첫 화면으로 돌아가요');goHome();return}
+    renderScores();renderMe();renderTools();renderBoard();
+  }));
+  subs.push(onValue(ref(db,base+'/prot'),s=>{V.prot=s.val()||{};calcProtNext();renderBoard();renderScores()}));
+  subs.push(onValue(ref(db,base+'/wstats'),s=>{V.wstats=s.val()||{};renderTools()}));
+  subs.push(onValue(query(ref(db,base+'/log'),limitToLast(14)),s=>{
+    const o=s.val()||{};V.log=Object.keys(o).sort().map(k=>o[k]);renderLog();
+  }));
+  tick=setInterval(onTick,500);
+  renderAll();
+}
+function roomGone(){forgetRoom(code);toast('방이 삭제되었어요');goHome()}
+
+/* ---------------- 보드 ---------------- */
+let boardObs=null;
+function buildBoard(){
+  const {W,H}=V.cfg,b=$('board');b.innerHTML='';
+  b.style.gridTemplateColumns=`repeat(${W},1fr)`;
+  b.style.maxWidth=`calc((100dvh - ${role==='teacher'?200:245}px) * ${W/H})`;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const c=document.createElement('button');c.className='cell';c.type='button';
+    c.onclick=()=>onCell(x,y);b.appendChild(c);
+  }
+  if(boardObs)boardObs.disconnect();
+  boardObs=new ResizeObserver(()=>{const w=b.clientWidth;b.style.setProperty('--cs',((w-2*(W-1))/W)+'px')});
+  boardObs.observe(b);
+}
+const cellEl=(x,y)=>$('board').children[y*V.cfg.W+x];
+function renderBoard(oldCells){
+  if(!V.cfg)return;
+  const {W,H}=V.cfg,st=effStatus(),t=role==='student'?myTeam():-1;
+  const crowns=crownTeams(counts());
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const el=cellEl(x,y);if(!el)continue;
+    const o=owner(x,y),b=isBase(x,y);
+    let cls='cell';
+    if(b)cls+=' base';
+    if(!b&&o>=0&&isProt(x,y))cls+=' prot';
+    if(role==='student'&&st==='playing'&&t>=0&&canAttack(x,y,t))cls+=' can';
+    const k=key(x,y);
+    if(oldCells&&!b&&oldCells[k]!==V.cells[k]&&V.cells[k]!==undefined)cls+=' flash';
+    el.className=cls;
+    el.style.background=o>=0?COLORS[o]:'';
+    let txt='';
+    if(o>=0){
+      txt=EMOJI[o];
+      if(b&&!(isBase(x-1,y)&&owner(x-1,y)===o)&&!(isBase(x,y-1)&&owner(x,y-1)===o))txt='🏰';
+      else if(b&&crowns.has(o)&&isBase(x-1,y)&&owner(x-1,y)===o&&!(isBase(x,y-1)&&owner(x,y-1)===o))txt='👑';
+    }
+    if(el.textContent!==txt)el.textContent=txt;
+  }
+}
+function onCell(x,y){
+  if(role!=='student'||Q)return;
+  const st=effStatus();
+  if(st!=='playing'){toast(st==='lobby'?'아직 시작 전이에요':st==='paused'?'잠시 멈춘 상태예요':'게임이 끝났어요');return}
+  const t=myTeam();
+  if(now()<cdUntil&&Date.now()<cdUntil){toast(`${Math.ceil((cdUntil-Date.now())/1000)}초 뒤에 다시 도전할 수 있어요`);return}
+  if(isBase(x,y)){toast('🏰 근거지는 빼앗을 수 없어요!');return}
+  if(owner(x,y)===t){toast('이미 우리 모둠 땅이에요');return}
+  if(isProt(x,y)){toast(`🛡️ 보호 중인 땅이에요 (${fmtLong(V.prot[key(x,y)]-now()).replace(/ 남음$/,'')} 남음)`);return}
+  if(!canAttack(x,y,t)){toast('우리 땅과 붙어 있는 칸만 고를 수 있어요 (노란 점선 칸)');return}
+  openQuestion(x,y);
+}
+
+/* ---------------- 화면 갱신 ---------------- */
+function renderAll(){renderHeader();renderScores();renderBoard();renderMe();renderTools();renderLog()}
+const STATUS_TXT={lobby:'⏳ 시작 전',playing:'▶ 진행 중',paused:'⏸ 멈춤',ended:'🏁 끝'};
+function renderHeader(){
+  const st=effStatus(),chip=$('gStatus');
+  chip.textContent=STATUS_TXT[st]||'';
+  chip.classList.toggle('click',st==='ended');
+  const veil=$('veil');
+  if(st==='lobby'){veil.textContent=role==='student'?'⏳ 선생님이 시작하길 기다려요':'⏳ 학생들이 모이면 "게임 시작"을 눌러요';veil.classList.remove('hidden')}
+  else if(st==='paused'){veil.textContent='⏸ 잠시 멈췄어요';veil.classList.remove('hidden')}
+  else veil.classList.add('hidden');
+  if(st==='ended'){if(!endedShown){endedShown=true;showResults()}}else endedShown=false;
+}
+$('gStatus').onclick=()=>{if(effStatus()==='ended')showResults()};
+function fmt(ms){ms=Math.max(0,ms);const s=Math.ceil(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function fmtLong(ms){
+  ms=Math.max(0,ms);const s=Math.ceil(ms/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);
+  if(d>=1)return `${d}일 ${h}시간 남음`;
+  if(h>=1)return `${h}시간 ${String(m).padStart(2,'0')}분`;
+  return fmt(ms);
+}
+function onTick(){
+  const c=V.cfg;if(!c)return;
+  let txt='계속';
+  if(c.status==='ended')txt='끝';
+  else if(c.status==='playing'&&c.endsAt)txt=fmtLong(c.endsAt-now());
+  else if(c.status==='paused'){
+    if(c.mode==='open')txt=c.deadline?fmtLong(c.deadline-now()):'계속';
+    else txt=c.durationMin>0?fmtLong(c.remainMs):'계속';
+  }
+  else if(c.status==='lobby'&&c.durationMin>0)txt=fmtLong(c.durationMin*60000);
+  $('gTimer').textContent='⏱ '+txt;
+  if(V.protNext&&now()>=V.protNext){calcProtNext();renderBoard();renderScores()}
+  const st=effStatus();
+  if(st==='ended'&&c.status==='playing'){
+    renderHeader();renderBoard();
+    if(role==='teacher'&&!endGuard){endGuard=true;update(ref(db,`rooms/${code}/config`),{status:'ended'}).catch(()=>{endGuard=false})}
+  }
+}
+function renderScores(){
+  if(!V.cfg)return;
+  const cs=counts(),total=V.cfg.W*V.cfg.H,mem=Array(V.cfg.n).fill(0);
+  Object.values(V.players).forEach(p=>{if(p.team>=0&&p.team<V.cfg.n)mem[p.team]++});
+  const mine=role==='student'?myTeam():-1,crowns=crownTeams(cs),n=now(),shield=Array(V.cfg.n).fill(0);
+  for(const k in V.prot){
+    if(!(V.prot[k]>n))continue;
+    const o=V.cells[k];if(o!==undefined&&o>=0&&o<V.cfg.n)shield[o]++;
+  }
+  $('scores').innerHTML=V.cfg.teams.map((t,i)=>{
+    const ri=rankInfo(cs[i]),crown=crowns.has(i);
+    return `<div class="score ${i===mine?'mine':''} ${crown?'lead':''}"><div class="n"><span>${EMOJI[i]}</span>${esc(t.name)}${crown?' 👑':''} <small style="color:var(--mute);font-weight:500">${mem[i]}명</small></div><div class="c">${cs[i]}<small> 칸</small></div><div class="rk"><span class="rb r${ri.lv}">${ri.r.emoji} ${ri.r.name}</span>${shield[i]?`<span class="sh" title="보호 중인 땅">🛡️${shield[i]}</span>`:''}</div><div class="nx">${ri.need?`${ri.nextName}까지 ${ri.need}칸`:'최고 등급!'}</div><div class="bar2" style="background:${COLORS[i]};width:${Math.max(3,cs[i]/total*100*3)}%;max-width:100%"></div></div>`;
+  }).join('');
+}
+const mastCount=p=>Object.keys(p.mastered||{}).length;
+const mastPct=p=>V.cfg.words.length?Math.round(mastCount(p)/V.cfg.words.length*100):0;
+function renderMe(){
+  const box=$('me');
+  if(role!=='student'){box.innerHTML=`<span style="color:var(--mute)">🏰 하얀 테두리 칸은 근거지예요. 빼앗을 수 없어요.</span>`;return}
+  const p=myPlayer();if(!p){box.innerHTML='';return}
+  const lobby=effStatus()==='lobby';
+  const mc=mastCount(p),tot=V.cfg.words.length,att=(p.correct||0)+(p.wrong||0),acc=att?Math.round((p.correct||0)/att*100):0;
+  box.innerHTML=`<span>${EMOJI[p.team]} <b>${esc(V.cfg.teams[p.team].name)}</b> · ${esc(p.name)}</span><span>${V.cfg.items!==false?`🔥 연속 ${p.streak||0}/${STREAK_N} · `:''}점령 ${p.cap||0}칸 · 📘 단어 ${mc}/${tot} (<b>${mastPct(p)}%</b>) · 정답률 ${acc}%</span>`;
+  if(lobby){const b=document.createElement('button');b.className='btn sub sm';b.textContent='모둠 바꾸기';b.onclick=()=>{teardown();showTeamSelect(code,p.name,V.cfg)};box.appendChild(b)}
+}
+function renderLog(){
+  const last=V.log[V.log.length-1];
+  $('ticker').innerHTML=last?esc(last.text):'';
+  $('tLog').innerHTML=V.log.slice().reverse().map(l=>`<div>${l.t>=0&&l.t<6?EMOJI[l.t]:'•'} ${esc(l.text)}</div>`).join('');
+}
+function renderTools(){
+  if(role!=='teacher'||!V.cfg)return;
+  const st=V.cfg.status,c=$('tCtrl');c.innerHTML='';
+  const add=(txt,fn,cls='')=>{const b=document.createElement('button');b.className='btn sm '+cls;b.textContent=txt;b.onclick=fn;c.appendChild(b)};
+  if(st==='lobby')add('▶ 게임 시작',()=>teacherAct('start'));
+  if(st==='playing'){add('⏸ 일시정지',()=>teacherAct('pause'),'sub');add('🏁 종료',()=>teacherAct('end'),'sub')}
+  if(st==='paused'){add('▶ 다시 시작',()=>teacherAct('resume'));add('🏁 종료',()=>teacherAct('end'),'sub')}
+  if(st==='ended')add('🔁 새 게임(지도 초기화)',()=>$('tReset').click());
+  if($('tWrongMode').value!==(V.cfg.wrongMode||'retry'))$('tWrongMode').value=V.cfg.wrongMode||'retry';
+  const itv=V.cfg.items!==false?'on':'off';if($('tItems').value!==itv)$('tItems').value=itv;
+  const all=Object.values(V.players),ps=all.slice().sort((a,b)=>(b.cap||0)-(a.cap||0)).slice(0,30);
+  $('tPlayers').innerHTML=ps.length?ps.map(p=>`<div><span>${EMOJI[p.team]||''} ${esc(p.name)}</span><span>${p.cap||0}칸 · 단어 ${mastPct(p)}%</span></div>`).join(''):'<div style="color:var(--mute)">아직 접속한 학생이 없어요</div>';
+  const avg=all.length?Math.round(all.reduce((s,p)=>s+mastPct(p),0)/all.length):0;
+  $('tMastery').innerHTML=all.length?`<div><span>학생 평균 (등록한 ${V.cfg.words.length}단어 중)</span><span><b>${avg}%</b></span></div>`:'';
+  const hard=Object.entries(V.wstats||{}).map(([i,s])=>({w:V.cfg.words[i],c:s.c||0,x:s.w||0})).filter(o=>o.w&&o.x>0).sort((a,b)=>b.x/(b.x+b.c)-a.x/(a.x+a.c)||b.x-a.x).slice(0,6);
+  $('tHard').innerHTML=hard.length?hard.map(o=>`<div><span>${esc(o.w.en)} <small style="color:var(--mute)">${esc(o.w.ko)}</small></span><span>${Math.round(o.x/(o.x+o.c)*100)}% 오답</span></div>`).join(''):'<div style="color:var(--mute)">아직 기록이 없어요</div>';
+}
+$('tWrongMode').onchange=()=>update(ref(db,`rooms/${code}/config`),{wrongMode:$('tWrongMode').value}).then(()=>toast('설정을 바꿨어요')).catch(e=>toast('실패: '+e.message,4000));
+$('tItems').onchange=()=>update(ref(db,`rooms/${code}/config`),{items:$('tItems').value!=='off'}).then(()=>toast('설정을 바꿨어요')).catch(e=>toast('실패: '+e.message,4000));
+$('tCopy').onclick=async()=>{
+  try{await navigator.clipboard.writeText($('tLink').value);toast('링크를 복사했어요')}
+  catch(e){$('tLink').select();document.execCommand('copy');toast('링크를 복사했어요')}
+};
+
+/* ---------------- 선생님 조작 ---------------- */
+async function teacherAct(a){
+  const c=V.cfg,ref_=ref(db,`rooms/${code}/config`);
+  try{
+    if(a==='start')await update(ref_,{status:'playing',endsAt:c.durationMin>0?now()+c.durationMin*60000:0,remainMs:0});
+    if(a==='pause')await update(ref_,{status:'paused',remainMs:c.endsAt?Math.max(0,c.endsAt-now()):0});
+    if(a==='resume')await update(ref_,{status:'playing',endsAt:c.mode==='open'?(c.deadline>now()?c.deadline:0):(c.durationMin>0?now()+(c.remainMs||0):0)});
+    if(a==='end')await update(ref_,{status:'ended'});
+  }catch(e){toast('실패: '+e.message,4000)}
+}
+$('tReset').onclick=async()=>{
+  if(!confirm('지도와 학생 기록을 모두 지우고 처음 상태로 되돌릴까요? (참가한 학생과 모둠은 그대로 유지돼요)'))return;
+  const open=V.cfg.mode==='open',dl=open&&V.cfg.deadline>now()?V.cfg.deadline:0;
+  const u={cells:null,prot:null,log:null,'config/status':open?'playing':'lobby','config/endsAt':open?dl:0,'config/remainMs':0};
+  if(open&&!dl)u['config/deadline']=0;
+  Object.keys(V.players).forEach(id=>{u[`players/${id}/correct`]=0;u[`players/${id}/wrong`]=0;u[`players/${id}/cap`]=0;u[`players/${id}/streak`]=0;u[`players/${id}/mastered`]=null});
+  u.wstats=null;
+  try{await update(ref(db,`rooms/${code}`),u);endGuard=false;toast('초기화했어요')}catch(e){toast('실패: '+e.message,4000)}
+};
+$('tDelete').onclick=async()=>{
+  if(!confirm('방을 완전히 삭제할까요? 모든 기록이 사라져요.'))return;
+  try{const c=code;await remove(ref(db,`rooms/${c}`));forgetRoom(c)}catch(e){toast('실패: '+e.message,4000)}
+};
+$('leaveBtn').onclick=()=>{if(role==='teacher'||confirm('나갈까요? (다시 들어오면 기록이 그대로 이어져요)'))goHome()};
+
+/* ---------------- 문제 (객관식 2 + 주관식 1 = 땅 1칸) ---------------- */
+const STEPS=['choice','choice','type'];
+const STREAK_N=5;   // 이만큼 연속으로 맞히면 아이템
+const COPY_N=7;     // 따라 쓰기 횟수
+function pickDir(v){return v==='mix'?(Math.random()<.5?'k2e':'e2k'):v}
+function masteredMap(){const p=myPlayer();return (p&&p.mastered)||{}}
+function drawWord(exclude){
+  const W=V.cfg.words,m=masteredMap();
+  if(!pool.length)pool=shuffle(W.map((_,i)=>i));
+  const ok=pool.map((v,k)=>k).filter(k=>!exclude.includes(pool[k]));
+  if(!ok.length){pool=shuffle(W.map((_,i)=>i));return drawWord(exclude)}
+  const fresh=ok.filter(k=>!m[pool[k]]);
+  const list=(fresh.length&&Math.random()<.7)?fresh:ok;   // 아직 못 맞힌 단어를 더 자주 내요
+  return pool.splice(list[Math.floor(Math.random()*list.length)],1)[0];
+}
+function buildStep(idx,fmtv){
+  const W=V.cfg.words,w=W[idx],dir=pickDir(V.cfg.dir);
+  const kos=w.ko.split('/').map(s=>s.trim()).filter(Boolean);
+  const q={idx,w,kos,dir,fmt:fmtv,prompt:dir==='k2e'?kos.join(' / '):w.en};
+  if(fmtv==='choice'){
+    const correct=dir==='k2e'?w.en:kos[Math.floor(Math.random()*kos.length)];
+    q.correct=correct;
+    let others=W.filter(o=>o!==w).map(o=>dir==='k2e'?o.en:o.ko.split('/')[0].trim());
+    others=[...new Set(others)].filter(s=>norm(s)!==norm(correct)&&!kos.some(k=>normKo(k)===normKo(s)));
+    q.options=shuffle([correct,...shuffle(others).slice(0,3)]);
+  }
+  return q;
+}
+function isCorrect(q,val){
+  if(q.fmt==='choice')return val===q.correct;
+  if(q.dir==='k2e')return norm(val)===norm(q.w.en);
+  return q.kos.some(k=>normKo(k)===normKo(val));
+}
+// 힌트: 시간이 30% 지나면 글자 1개, 60% 지나면 2개를 보여줘요 (영어는 알파벳, 한글은 글자)
+function hintText(q,n){
+  if(q.dir==='k2e'){let s=0;return [...q.w.en].map(ch=>{if(!/[A-Za-z]/.test(ch))return ch;if(s<n){s++;return ch}return '_'}).join(' ')}
+  return [...q.kos[0].replace(/\s+/g,'')].map((ch,i)=>i<n?ch:'○').join(' ');
+}
+function openQuestion(x,y){
+  const used=[];
+  const steps=STEPS.map(f=>{const i=drawWord(used);used.push(i);return buildStep(i,f)});
+  Q={x,y,steps,i:0,cur:null,done:false};
+  showStep();
+  $('qModal').classList.remove('hidden');
+}
+function showStep(){
+  const q=Q.steps[Q.i],p=myPlayer(),limit=V.cfg.limit*1000;
+  Q.cur=q;Q.done=false;Q.start=Date.now();Q.hintLv=0;
+  const dots=STEPS.map((_,k)=>k<Q.i?'🟢':k===Q.i?'🔵':'⚪').join(' ');
+  const fire=V.cfg.items!==false?`   🔥 연속 ${p.streak||0}/${STREAK_N}`:'';
+  $('qWho').textContent=`${EMOJI[p.team]} ${V.cfg.teams[p.team].name} · ${p.name}   ${dots}  문제 ${Q.i+1}/${STEPS.length} (${q.fmt==='choice'?'객관식':'주관식'})${fire}`;
+  $('qText').textContent=q.prompt;
+  $('qHint').textContent=q.fmt==='type'?hintText(q,0):'';
+  $('qResult').textContent='';$('qResult').className='result';
+  const typed=q.fmt==='type';
+  $('qType').classList.toggle('hidden',!typed);
+  $('qChoice').classList.toggle('hidden',typed);
+  $('ans').value='';$('ans').disabled=false;$('qSubmit').disabled=false;
+  $('ans').placeholder=q.dir==='k2e'?'영어 단어를 쓰세요':'우리말 뜻을 쓰세요';
+  const box=$('qChoice');box.innerHTML='';
+  if(!typed)q.options.forEach(o=>{const b=document.createElement('button');b.type='button';b.textContent=o;b.onclick=()=>submitAnswer(o,false,b);box.appendChild(b)});
+  if(typed)setTimeout(()=>$('ans').focus(),60);
+  const bar=$('qBar');bar.style.width='100%';bar.style.background='var(--ok)';
+  clearInterval(qTimer);
+  qTimer=setInterval(()=>{
+    if(!Q||!Q.cur){clearInterval(qTimer);return}
+    const left=limit-(Date.now()-Q.start),pc=Math.max(0,left/limit);
+    bar.style.width=pc*100+'%';bar.style.background=pc>.5?'var(--ok)':pc>.25?'var(--gold)':'var(--bad)';
+    const c=Q.cur;
+    if(c.fmt==='type'){const lv=pc<.4?2:pc<.7?1:0;if(lv!==Q.hintLv){Q.hintLv=lv;$('qHint').textContent=hintText(c,lv)}}
+    if(left<=0)submitAnswer('',true);
+  },100);
+}
+$('qForm').addEventListener('submit',e=>{e.preventDefault();if(Q&&Q.cur&&Q.cur.fmt==='type'){const v=$('ans').value;if(v.trim())submitAnswer(v,false)}});
+function closeQ(silent){clearInterval(qTimer);Q=null;$('qModal').classList.add('hidden')}
+
+async function submitAnswer(val,timeout,btn){
+  if(!Q||Q.done)return;
+  Q.done=true;clearInterval(qTimer);
+  $('ans').disabled=true;$('qSubmit').disabled=true;
+  $('qChoice').querySelectorAll('button').forEach(b=>b.disabled=true);
+  const run=Q,q=run.cur,ok=!timeout&&isCorrect(q,val),r=$('qResult');
+  const last=run.i===STEPS.length-1;
+  const ansText=q.fmt==='choice'?q.correct:(q.dir==='k2e'?q.w.en:q.kos.join(' / '));
+  let delay=2400,next=false,item=null,goCopy=false;
+  try{
+    if(ok){
+      if(effStatus()!=='playing'){r.className='result bad';r.textContent='게임이 멈춰서 땅을 차지하지 못했어요'}
+      else{
+        if(btn)btn.classList.add('right');
+        const plan=newPlan(),p=myPlayer()||{},itemsOn=V.cfg.items!==false;
+        plan.u[`players/${pid}/correct`]=increment(1);
+        plan.u[`players/${pid}/mastered/${q.idx}`]=true;
+        plan.u[`wstats/${q.idx}/c`]=increment(1);
+        const gotItem=itemsOn&&((p.streak||0)+1>=STREAK_N);
+        plan.u[`players/${pid}/streak`]=gotItem?0:(p.streak||0)+1;
+        if(!last){
+          if(gotItem)item=planItem(plan);
+          await update(ref(db,`rooms/${code}`),finishPlan(plan));
+          r.className='result ok';r.textContent=`⭕ 정답! 다음 문제 (${run.i+1}/${STEPS.length} 통과)`+(item?' 🎁':'');
+          next=true;delay=900;
+        } else {
+          const res=await finalizeCapture(run,plan,gotItem,'quiz');
+          r.className='result '+res.cls;r.textContent=res.msg;item=res.item;
+          if(res.cls==='ok'){delay=1500;cdUntil=Date.now()+700}
+        }
+      }
+    } else {
+      if(btn)btn.classList.add('wrong');
+      if(q.fmt==='choice')$('qChoice').querySelectorAll('button').forEach(b=>{if(b.textContent===q.correct)b.classList.add('right')});
+      goCopy=q.fmt==='type'&&V.cfg.wrongMode==='copy'&&effStatus()==='playing';
+      r.className='result bad';
+      r.innerHTML=`${timeout?'⏰ 시간 초과!':'❌ 아쉬워요!'} 정답: ${esc(ansText)}<br><small>${goCopy?`이 단어를 ${COPY_N}번 따라 쓰면 통과해요 ✍️`:'처음부터 다시 도전해요'}</small>`;
+      if(goCopy)delay=2000;else cdUntil=Date.now()+V.cfg.wrongCd*1000;
+      const upd={};
+      upd[`players/${pid}/wrong`]=increment(1);
+      upd[`players/${pid}/streak`]=0;
+      upd[`wstats/${q.idx}/w`]=increment(1);
+      update(ref(db,`rooms/${code}`),upd).catch(()=>{});
+    }
+  }catch(e){r.className='result bad';r.textContent='저장에 실패했어요: '+e.message}
+  setTimeout(async()=>{
+    if(Q!==run)return;
+    if(item){await showItem(item);if(Q!==run)return}
+    if(goCopy){startCopy(run,q);return}
+    if(next){run.i++;showStep()}else closeQ();
+  },delay);
+}
+
+/* ---------------- 땅 차지 계획 (한 번에 저장) ---------------- */
+const newPlan=()=>({u:{},pend:{},cap:0,logs:[]});
+const ownP=(plan,x,y)=>{const v=plan.pend[key(x,y)];return v!==undefined?v:owner(x,y)};
+// 포위 계산에서 "빼앗을 수 없는 칸"(다른 모둠 근거지 + 보호 중인 다른 모둠 땅)
+function seedsFor(t,plan){
+  const s=Object.keys(baseMap()).filter(k=>baseMap()[k]!==t),n=now();
+  for(const k in V.prot){
+    if(!(V.prot[k]>n)||plan.pend[k]!==undefined||s.includes(k))continue;
+    const [x,y]=k.split('_').map(Number);
+    if(ownP(plan,x,y)!==t)s.push(k);
+  }
+  return s;
+}
+function planCapture(x,y,plan){
+  const t=myTeam(),k=key(x,y),p=myPlayer();
+  plan.pend[k]=t;
+  const enc=enclosure(V.cfg.W,V.cfg.H,t,(cx,cy)=>ownP(plan,cx,cy),seedsFor(t,plan));
+  plan.u[`cells/${k}`]=t;plan.u[`prot/${k}`]=null;
+  enc.forEach(e=>{plan.u[`cells/${e}`]=t;plan.u[`prot/${e}`]=null;plan.pend[e]=t});
+  const gained=1+enc.length;plan.cap+=gained;
+  plan.logs.push({t,text:gained>1?`${p.name}(${V.cfg.teams[t].name}) 포위 성공! +${gained}칸 🎉`:`${p.name}(${V.cfg.teams[t].name})이(가) 땅을 차지했어요`});
+  return gained;
+}
+// 5연속 정답 아이템: 받자마자 바로 사용 (모아 둘 수 없어요)
+function planItem(plan){
+  const t=myTeam(),p=myPlayer(),{W,H}=V.cfg,hours=V.cfg.protectHours||21,tn=V.cfg.teams[t].name;
+  const nb=[[1,0],[-1,0],[0,1],[0,-1]];
+  let kind=Math.random()<.5?'shield':'free';
+  const freed=[];
+  if(kind==='free'){
+    for(let i=0;i<2;i++){
+      const empty=[],enemy=[];
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+        const k=key(x,y),o=ownP(plan,x,y);
+        if(isBase(x,y)||o===t)continue;
+        if(plan.pend[k]===undefined&&(V.prot[k]||0)>now())continue;
+        if(!nb.some(([dx,dy])=>{const nx=x+dx,ny=y+dy;return nx>=0&&ny>=0&&nx<W&&ny<H&&ownP(plan,nx,ny)===t}))continue;
+        (o===-1?empty:enemy).push(k);
+      }
+      const src=empty.length?empty:enemy;
+      if(!src.length)break;
+      const k=src[Math.floor(Math.random()*src.length)];
+      plan.pend[k]=t;plan.u[`cells/${k}`]=t;plan.u[`prot/${k}`]=null;freed.push(k);
+    }
+    if(!freed.length)kind='shield';
+  }
+  if(kind==='free'){
+    const enc=enclosure(W,H,t,(cx,cy)=>ownP(plan,cx,cy),seedsFor(t,plan));
+    enc.forEach(e=>{plan.u[`cells/${e}`]=t;plan.u[`prot/${e}`]=null;plan.pend[e]=t});
+    plan.cap+=freed.length+enc.length;
+    plan.logs.push({t,text:`${p.name}(${tn}) ${STREAK_N}연속 정답! 🎁 땅 ${freed.length}칸 무료 획득${enc.length?` + 포위 ${enc.length}칸`:''}`});
+    return {kind:'free',n:freed.length,extra:enc.length};
+  }
+  const until=now()+hours*3600000;let n=0;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(isBase(x,y)||ownP(plan,x,y)!==t)continue;
+    plan.u[`prot/${key(x,y)}`]=until;n++;
+  }
+  plan.logs.push({t,text:`${p.name}(${tn}) ${STREAK_N}연속 정답! 🛡️ 땅 ${n}칸 ${hours}시간 보호`});
+  return {kind:'shield',hours,n};
+}
+function finishPlan(plan){
+  const u=plan.u;
+  if(plan.cap)u[`players/${pid}/cap`]=increment(plan.cap);
+  plan.logs.forEach(l=>{const lk=push(ref(db,`rooms/${code}/log`)).key;u[`log/${lk}`]={ts:Date.now(),t:l.t,text:l.text}});
+  return u;
+}
+async function finalizeCapture(run,plan,gotItem,via){
+  const t=myTeam(),{x,y}=run;
+  const lead=via==='copy'?'✍️ 따라 쓰기 통과! ':`⭕ ${STEPS.length}문제 통과! `;
+  let cls='ok',msg='',item=null;
+  if(effStatus()!=='playing'){cls='bad';msg='게임이 멈춰서 땅을 차지하지 못했어요'}
+  else if(owner(x,y)===t)msg=lead+'이미 우리 모둠 땅이 됐어요';
+  else if(isBase(x,y)){cls='bad';msg='근거지는 차지할 수 없어요'}
+  else if(isProt(x,y)){cls='bad';msg='그 사이 🛡️ 보호된 땅이 되어서 차지할 수 없어요'}
+  else{const g=planCapture(x,y,plan);msg=lead+(g>1?`포위 성공! +${g}칸 🎉`:'땅을 차지했어요!')}
+  if(gotItem&&effStatus()==='playing')item=planItem(plan);
+  const u=finishPlan(plan);
+  if(Object.keys(u).length)await update(ref(db,`rooms/${code}`),u);
+  return {cls,msg,item};
+}
+
+/* ---------------- 아이템 안내 창 ---------------- */
+function showItem(it){
+  return new Promise(res=>{
+    const hours=V.cfg.protectHours||21;
+    $('itemEmoji').textContent=it.kind==='shield'?'🛡️':'🎁';
+    $('itemTitle').textContent=it.kind==='shield'?`땅 보호 ${it.hours||hours}시간!`:`땅 ${it.n}칸 무료 획득!`;
+    $('itemDesc').textContent=it.kind==='shield'
+      ?`${STREAK_N}연속 정답! 지금 우리 모둠 땅 ${it.n}칸이 ${it.hours||hours}시간 동안 빼앗기지 않아요. (아이템은 바로 사용돼요)`
+      :`${STREAK_N}연속 정답! 우리 땅 옆의 ${it.n}칸을 공짜로 차지했어요.${it.extra?` 포위 보너스 +${it.extra}칸!`:''} (아이템은 바로 사용돼요)`;
+    const m=$('itemModal');m.classList.remove('hidden');
+    let done=false,tm=null;
+    const fin=()=>{if(done)return;done=true;clearTimeout(tm);m.classList.add('hidden');res()};
+    tm=setTimeout(fin,5000);$('itemOk').onclick=fin;
+  });
+}
+
+/* ---------------- 따라 쓰기 (복사·붙여넣기 방지) ---------------- */
+let C=null;
+function closeCopy(){C=null;$('copyModal').classList.add('hidden')}
+function startCopy(run,q){
+  clearInterval(qTimer);
+  $('qModal').classList.add('hidden');
+  C={run,word:q.w.en,typed:'',n:0,done:false};
+  $('cpNeed').textContent=COPY_N;
+  $('cpMean').textContent=q.kos.join(' / ');
+  $('cpResult').textContent='';$('cpResult').className='result';
+  $('cpNote2').classList.toggle('hidden',!q.w.en.includes(' '));
+  $('cpIn').value='';$('cpIn').disabled=false;
+  drawCopy();
+  $('copyModal').classList.remove('hidden');
+  setTimeout(()=>$('cpIn').focus(),80);
+}
+function drawCopy(){
+  if(!C)return;
+  const w=C.word,t=C.typed.length;
+  $('cpWord').innerHTML=[...w].map((ch,i)=>`<span class="${i<t?'ok':i===t?'nx':''}">${ch===' '?'·':esc(ch)}</span>`).join('');
+  $('cpDots').textContent='●'.repeat(C.n)+'○'.repeat(COPY_N-C.n);
+}
+function cpWarn(msg){
+  const el=$('cpIn');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');
+  $('cpResult').className='result bad';$('cpResult').textContent=msg;
+  clearTimeout(cpWarn._t);cpWarn._t=setTimeout(()=>{if(C&&!C.done)$('cpResult').textContent=''},1600);
+}
+(function initCopyInput(){
+  const el=$('cpIn');
+  ['paste','drop','cut','copy','contextmenu'].forEach(ev=>el.addEventListener(ev,e=>{
+    e.preventDefault();if(C&&(ev==='paste'||ev==='drop'))cpWarn('붙여넣기는 안 돼요! 한 글자씩 직접 써요 ✍️');
+  }));
+  el.addEventListener('beforeinput',e=>{
+    if(!C||!e.cancelable)return;
+    const bulk=['insertFromPaste','insertFromDrop','insertFromYank','insertFromPasteAsQuotation','insertReplacementText'].includes(e.inputType);
+    const long=e.inputType==='insertText'&&typeof e.data==='string'&&e.data.length>1;
+    if(bulk||long){e.preventDefault();cpWarn('한 글자씩 직접 써야 해요 ✍️')}
+  });
+  // 어떤 방법으로든 한 번에 여러 글자가 들어오거나 틀린 글자가 들어오면 되돌려요
+  el.addEventListener('input',()=>{
+    if(!C||C.done)return;
+    const v=el.value,prev=C.typed,w=C.word;
+    if(v===prev)return;
+    let ok=false;
+    if(v.length<prev.length&&prev.startsWith(v))ok=true;                       // 지우기
+    else if(v.length===prev.length+1&&v.startsWith(prev)&&v[prev.length].toLowerCase()===w[prev.length].toLowerCase())ok=true; // 맞는 글자 1개
+    if(!ok){el.value=prev;cpWarn(v.length>prev.length+1?'한 글자씩 직접 써야 해요 ✍️':'글자가 달라요. 단어를 보고 따라 써요');return}
+    C.typed=v;
+    if(v.length===w.length){
+      C.n++;C.typed='';el.value='';drawCopy();
+      if(C.n>=COPY_N)finishCopy();
+    } else drawCopy();
+  });
+  $('cpQuit').onclick=()=>{const run=C&&C.run;closeCopy();if(run&&Q===run)closeQ()};
+})();
+async function finishCopy(){
+  const c=C;if(!c||c.done)return;c.done=true;
+  $('cpIn').disabled=true;
+  const run=c.run,r=$('cpResult');
+  let res;
+  try{res=await finalizeCapture(run,newPlan(),false,'copy')}catch(e){res={cls:'bad',msg:'저장에 실패했어요: '+e.message}}
+  r.className='result '+res.cls;r.textContent=res.msg;
+  if(res.cls==='ok')cdUntil=Date.now()+700;
+  setTimeout(()=>{if(C===c)closeCopy();if(Q===run)closeQ()},res.cls==='ok'?1600:2600);
+}
+
+/* ---------------- 등급 / 왕관 / 규칙 ---------------- */
+const RANKS=[{name:'마을',emoji:'🏘️',min:0},{name:'왕국',emoji:'🏯',min:.5},{name:'제국',emoji:'🏛️',min:1},{name:'대제국',emoji:'🌏',min:1.5}];
+// 모둠 수로 나눈 "공평한 몫"(지도 전체 칸 ÷ 모둠 수)의 0.5배/1배/1.5배가 기준이에요
+function rankThr(){const eq=V.cfg.W*V.cfg.H/V.cfg.n;return RANKS.map(r=>r.min?Math.ceil(r.min*eq-1e-9):0)}
+function rankInfo(c){
+  const th=rankThr();let lv=0;th.forEach((v,i)=>{if(c>=v)lv=i});
+  return {lv,r:RANKS[lv],need:lv<RANKS.length-1?th[lv+1]-c:0,nextName:lv<RANKS.length-1?RANKS[lv+1].name:''};
+}
+function crownTeams(cs){const mx=Math.max(...cs);return new Set(mx>4?cs.map((c,i)=>c===mx?i:-1).filter(i=>i>=0):[])}  // 근거지(4칸)보다 많이 차지해야 왕관
+function showRules(){
+  const c=V.cfg,th=rankThr(),hours=c.protectHours||21,copy=c.wrongMode==='copy';
+  $('rulesBody').innerHTML=`<ul class="rl">
+    <li>🎯 땅 1칸 = <b>객관식 2문제 + 주관식 1문제</b>를 모두 맞히면 차지!</li>
+    <li>✍️ 주관식을 틀리면 → ${copy?`<b>틀린 단어를 ${COPY_N}번 따라 쓰면 통과!</b> (복사·붙여넣기는 안 돼요. 한 글자씩 직접 써요)`:'<b>그 문제는 바로 끝나요.</b> 잠깐 쉬었다가 처음부터 다시 도전해요'}</li>
+    <li>🧱 우리 땅으로 빙 둘러싸면 안쪽이 한 번에 우리 땅! 🏰 근거지는 빼앗을 수 없어요.</li>
+    <li>🏅 등급: ${RANKS.map((r,i)=>i?`${r.emoji} ${r.name} ${th[i]}칸~`:`${r.emoji} ${r.name}`).join(' → ')}</li>
+    <li>👑 땅이 가장 많은 모둠에 왕관!</li>
+    ${c.items!==false?`<li>🔥 <b>${STREAK_N}연속 정답</b>이면 아이템이 <b>바로 자동 사용</b>돼요 (모아 둘 수 없어요)<br>🛡️ 땅 보호: 지금 가진 우리 땅이 ${hours}시간 동안 안전 · 🎁 공짜 땅 2칸<br>틀리거나 시간이 지나면 연속 기록이 0으로 돌아가요.</li>`:''}
+  </ul>`;
+  $('rulesModal').classList.remove('hidden');
+}
+$('rulesBtn').onclick=showRules;
+$('rulesClose').onclick=()=>$('rulesModal').classList.add('hidden');
+
+/* ---------------- 결과 ---------------- */
+function showResults(){
+  const cs=counts();
+  const order=V.cfg.teams.map((t,i)=>({t,i,c:cs[i]})).sort((a,b)=>b.c-a.c);
+  let h=order.map((o,i)=>{const ri=rankInfo(o.c);return `<div><span>${['🥇','🥈','🥉'][i]||(i+1)+'위'} ${EMOJI[o.i]} ${esc(o.t.name)}${i===0&&o.c>4?' 👑':''} <small>${ri.r.emoji} ${ri.r.name}</small></span><span>${o.c}칸</span></div>`}).join('');
+  const top=Object.values(V.players).sort((a,b)=>(b.cap||0)-(a.cap||0)).slice(0,5);
+  if(top.length)h+=`<h4>⭐ 활약한 친구들</h4>`+top.map(p=>`<div><span>${EMOJI[p.team]||''} ${esc(p.name)}</span><span>점령 ${p.cap||0}칸 · 단어 ${mastPct(p)}%</span></div>`).join('');
+  $('rank').innerHTML=h;
+  $('endModal').classList.remove('hidden');
+}
+$('endClose').onclick=()=>$('endModal').classList.add('hidden');
+
+} // main
+</script>
+</body>
 </html>
