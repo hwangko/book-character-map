@@ -203,10 +203,10 @@ small.mute{color:var(--mute);font-weight:400}
       </select></label>
     </div>
     <div class="row">
-      <label>5연속 정답 아이템 <select id="cItems"><option value="on" selected>켜기</option><option value="off">끄기</option></select></label>
+      <label>15연속 정답 아이템 <select id="cItems"><option value="on" selected>켜기</option><option value="off">끄기</option></select></label>
       <label>땅 보호 시간(시간) <input type="number" id="cProt" min="1" max="72" value="21" style="width:70px"></label>
     </div>
-    <small class="mute">아이템은 5연속 정답마다 🛡️방금 차지한 땅 보호 또는 🎁2칸 무료 중 하나가 자동으로 바로 사용돼요. 따라 쓰기는 복사·붙여넣기가 막혀 있어요.</small>
+    <small class="mute">아이템은 15연속 정답마다 🛡️방금 차지한 땅 보호 또는 🎁2칸 무료 중 하나가 자동으로 바로 사용돼요. 따라 쓰기는 복사·붙여넣기가 막혀 있어요.</small>
   </div>
   <div class="card"><h3>3. 단어 목록 <small class="mute">(한 줄에 하나: 영어,뜻 / 뜻이 여러 개면 "/" 로 구분 / 8개 이상)</small></h3>
     <textarea id="cWords" spellcheck="false"></textarea>
@@ -244,7 +244,7 @@ small.mute{color:var(--mute);font-weight:400}
       <div class="ctrl" id="tCtrl"></div>
       <h4>설정 바꾸기</h4>
       <label>주관식 오답 시 <select id="tWrongMode"><option value="retry">바로 종료 (다시 도전)</option><option value="copy">7번 따라 쓰면 통과</option></select></label>
-      <label>5연속 정답 아이템 <select id="tItems"><option value="on">켜기</option><option value="off">끄기</option></select></label>
+      <label>15연속 정답 아이템 <select id="tItems"><option value="on">켜기</option><option value="off">끄기</option></select></label>
       <h4>개인 순위 (점령 칸수 · 단어 마스터율)</h4>
       <div class="plist" id="tPlayers"></div>
       <h4>단어 마스터율 (한 번이라도 맞힌 단어)</h4>
@@ -292,7 +292,7 @@ small.mute{color:var(--mute);font-weight:400}
 <!-- 아이템 -->
 <div id="itemModal" class="modal hidden" style="z-index:40;align-items:center">
   <div class="box">
-    <div style="font-size:30px">🔥 5연속 정답!</div>
+    <div style="font-size:30px">🔥 15연속 정답!</div>
     <div id="itemEmoji" style="font-size:84px;margin:6px 0"></div>
     <h2 id="itemTitle" style="color:var(--gold)"></h2>
     <p id="itemDesc" style="font-size:17px;line-height:1.6"></p>
@@ -833,7 +833,7 @@ $('leaveBtn').onclick=()=>{if(role==='teacher'||confirm('나갈까요? (다시 �
 
 /* ---------------- 문제 (객관식 2 + 주관식 1 = 땅 1칸) ---------------- */
 const STEPS=['choice','choice','type'];
-const STREAK_N=5;   // 이만큼 연속으로 맞히면 아이템
+const STREAK_N=15;  // 이만큼 연속으로 맞히면 아이템
 const COPY_N=7;     // 따라 쓰기 횟수
 function pickDir(v){return v==='mix'?(Math.random()<.5?'k2e':'e2k'):v}
 function masteredMap(){const p=myPlayer();return (p&&p.mastered)||{}}
