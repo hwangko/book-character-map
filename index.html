@@ -199,7 +199,7 @@ small.mute{color:var(--mute);font-weight:400}
     <div class="row">
       <label>주관식 오답 시 <select id="cWrongMode">
         <option value="retry" selected>바로 종료 (잠깐 쉬고 처음부터 다시 도전)</option>
-        <option value="copy">틀린 단어를 7번 따라 쓰면 통과</option>
+        <option value="copy">틀린 단어를 7번 따라 쓴 후 재도전하여 통과</option>
       </select></label>
     </div>
     <div class="row">
@@ -243,7 +243,7 @@ small.mute{color:var(--mute);font-weight:400}
       <h4>진행</h4>
       <div class="ctrl" id="tCtrl"></div>
       <h4>설정 바꾸기</h4>
-      <label>주관식 오답 시 <select id="tWrongMode"><option value="retry">바로 종료 (다시 도전)</option><option value="copy">7번 따라 쓰면 통과</option></select></label>
+      <label>주관식 오답 시 <select id="tWrongMode"><option value="retry">바로 종료 (다시 도전)</option><option value="copy">7번 따라 쓴 후 재도전</option></select></label>
       <label>15연속 정답 아이템 <select id="tItems"><option value="on">켜기</option><option value="off">끄기</option></select></label>
       <h4>개인 순위 (점령 칸수 · 단어 마스터율)</h4>
       <div class="plist" id="tPlayers"></div>
@@ -883,7 +883,7 @@ function showStep(){
   const fire=V.cfg.items!==false?`   🔥 연속 ${p.streak||0}/${STREAK_N}`:'';
   $('qWho').textContent=`${EMOJI[p.team]} ${V.cfg.teams[p.team].name} · ${p.name}   ${dots}  문제 ${Q.i+1}/${STEPS.length} (${q.fmt==='choice'?'객관식':'주관식'})${fire}`;
   $('qText').textContent=q.prompt;
-  $('qHint').textContent=q.fmt==='type'?hintText(q,0):'';
+  $('qHint').textContent=q.fmt==='type'&&!q.noHint?hintText(q,0):'';
   $('qResult').textContent='';$('qResult').className='result';
   const typed=q.fmt==='type';
   $('qType').classList.toggle('hidden',!typed);
@@ -900,7 +900,7 @@ function showStep(){
     const left=limit-(Date.now()-Q.start),pc=Math.max(0,left/limit);
     bar.style.width=pc*100+'%';bar.style.background=pc>.5?'var(--ok)':pc>.25?'var(--gold)':'var(--bad)';
     const c=Q.cur;
-    if(c.fmt==='type'){const lv=pc<.4?2:pc<.7?1:0;if(lv!==Q.hintLv){Q.hintLv=lv;$('qHint').textContent=hintText(c,lv)}}
+    if(c.fmt==='type'&&!c.noHint){const lv=pc<.4?2:pc<.7?1:0;if(lv!==Q.hintLv){Q.hintLv=lv;$('qHint').textContent=hintText(c,lv)}}
     if(left<=0)submitAnswer('',true);
   },100);
 }
@@ -943,7 +943,7 @@ async function submitAnswer(val,timeout,btn){
       if(q.fmt==='choice')$('qChoice').querySelectorAll('button').forEach(b=>{if(b.textContent===q.correct)b.classList.add('right')});
       goCopy=q.fmt==='type'&&V.cfg.wrongMode==='copy'&&effStatus()==='playing';
       r.className='result bad';
-      r.innerHTML=`${timeout?'⏰ 시간 초과!':'❌ 아쉬워요!'} 정답: ${esc(ansText)}<br><small>${goCopy?`이 단어를 ${COPY_N}번 따라 쓰면 통과해요 ✍️`:'처음부터 다시 도전해요'}</small>`;
+      r.innerHTML=`${timeout?'⏰ 시간 초과!':'❌ 아쉬워요!'} 정답: ${esc(ansText)}<br><small>${goCopy?`이 단어를 ${COPY_N}번 따라 쓴 후 다시 맞혀야 통과해요 ✍️`:'처음부터 다시 도전해요'}</small>`;
       if(goCopy)delay=2000;else cdUntil=Date.now()+V.cfg.wrongCd*1000;
       const upd={};
       upd[`players/${pid}/wrong`]=increment(1);
@@ -1120,11 +1120,11 @@ async function finishCopy(){
   const c=C;if(!c||c.done)return;c.done=true;
   $('cpIn').disabled=true;
   const run=c.run,r=$('cpResult');
-  let res;
-  try{res=await finalizeCapture(run,newPlan(),false,'copy')}catch(e){res={cls:'bad',msg:'저장에 실패했어요: '+e.message}}
-  r.className='result '+res.cls;r.textContent=res.msg;
-  if(res.cls==='ok')cdUntil=Date.now()+700;
-  setTimeout(()=>{if(C===c)closeCopy();if(Q===run)closeQ()},res.cls==='ok'?1600:2600);
+  r.className='result ok';r.textContent='✍️ 완료! 다시 한번 정답을 입력해보세요 (힌트 없음)';
+  setTimeout(()=>{
+    if(C===c)closeCopy();
+    if(Q===run){ Q.cur.noHint = true; showStep(); }
+  }, 1600);
 }
 
 /* ---------------- 등급 / 왕관 / 규칙 ---------------- */
@@ -1140,7 +1140,7 @@ function showRules(){
   const c=V.cfg,th=rankThr(),hours=c.protectHours||21,copy=c.wrongMode==='copy';
   $('rulesBody').innerHTML=`<ul class="rl">
     <li>🎯 땅 1칸 = <b>객관식 2문제 + 주관식 1문제</b>를 모두 맞히면 차지!</li>
-    <li>✍️ 주관식을 틀리면 → ${copy?`<b>틀린 단어를 ${COPY_N}번 따라 쓰면 통과!</b> (복사·붙여넣기는 안 돼요. 한 글자씩 직접 써요)`:'<b>그 문제는 바로 끝나요.</b> 잠깐 쉬었다가 처음부터 다시 도전해요'}</li>
+    <li>✍️ 주관식을 틀리면 → ${copy?`<b>틀린 단어를 ${COPY_N}번 따라 쓴 후 힌트 없이 다시 맞혀야 통과!</b> (복사·붙여넣기는 안 돼요. 한 글자씩 직접 써요)`:'<b>그 문제는 바로 끝나요.</b> 잠깐 쉬었다가 처음부터 다시 도전해요'}</li>
     <li>🧱 우리 땅으로 빙 둘러싸면 안쪽이 한 번에 우리 땅! 🏰 근거지는 빼앗을 수 없어요.</li>
     <li>🏅 등급: ${RANKS.map((r,i)=>i?`${r.emoji} ${r.name} ${th[i]}칸~`:`${r.emoji} ${r.name}`).join(' → ')}</li>
     <li>👑 땅이 가장 많은 모둠에 왕관!</li>
